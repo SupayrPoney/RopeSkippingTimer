@@ -161,7 +161,8 @@ class Beeper(QThread):
         super(Beeper, self).__init__()
         self.freq = freq
         
-    def setFreq = 
+    def setFreq(self):
+        pass 
 
 def get_elapsed(start):
     return time.time() - start
