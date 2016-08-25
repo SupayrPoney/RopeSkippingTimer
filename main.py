@@ -1,19 +1,24 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import sys
+import PyQt5
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import time
 import math
+import winsound
 
-EXERCISETIME = 30
+EXERCISETIME = 60
 
 
 class MainWidget(QWidget):
+    freqChangeSignal = pyqtSignal(object)
+    togglerSignal = pyqtSignal()
     """docstring for MainWidget"""
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent)
+        
 
 
         self.mainLayout = QVBoxLayout()
@@ -64,6 +69,8 @@ class MainWidget(QWidget):
         self.inputLayout.addLayout(self.input3Layout)
 
         self.frequency = QLabel("0")
+        f = QFont("Arial", 40)
+        self.frequency.setFont( f)
         self.frequencyLayout.addWidget(self.frequency)
         self.frequencyLayout.setAlignment(Qt.AlignHCenter)
         
@@ -95,8 +102,11 @@ class MainWidget(QWidget):
 
             self.timerThread = TimerThread(self.interval, self.minFreq, self.maxFreq)
             self.timerThread.tick.connect(self.update)
-            # self.timerThread.progbar.connect(self.updateProgressBar)
+            self.timerThread.stopSignal.connect(self.stop)
             self.timerThread.start()
+
+            self.beeperThread = Beeper(self.minFreq, self.freqChangeSignal, self.togglerSignal, self.interval)
+            self.beeperThread.start()
         else:
             QMessageBox.warning(self, "Input missing", "No frequency.", QMessageBox.Ok)
 
@@ -104,13 +114,15 @@ class MainWidget(QWidget):
         if updateFreq:
             self.frequency.setText(str(round(currentFreq)))
         self.progressBar.setValue(100*percentage)
-
+        self.freqChangeSignal.emit(currentFreq)
 
 
     def stop(self):
         self.timerThread.stop()
+        self.togglerSignal.emit()
 
     def reset(self):
+        self.stop()
         self.frequency.setText("0")
         self.progressBar.setValue(0)
         
@@ -119,8 +131,7 @@ class MainWidget(QWidget):
 class TimerThread(QThread):
 
     tick = pyqtSignal(object, object, object)
-    
-
+    stopSignal = pyqtSignal()
     def __init__(self, interval, minFreq, maxFreq):
         QThread.__init__(self)
         self._isStopped = False
@@ -152,17 +163,61 @@ class TimerThread(QThread):
 
             
             time.sleep(1)
+        self.stopSignal.emit()
     def stop(self):
         self._isStopped = True
 
 class Beeper(QThread):
     """docstring for Beeper"""
-    def __init__(self, freq):
+    def __init__(self, freq, freqChangesignal, togglerSignal, interval):
         super(Beeper, self).__init__()
         self.freq = freq
+        self.signal = freqChangesignal
+        self.signal.connect(self.setFreq)
+        self.timerToggle = togglerSignal
+        self.timerToggle.connect(self.toggle)
+        self.stop = False
+        self.timeToSleep = 1/(self.freq/60)
+        self.timeToSleepInc = self.timeToSleep/100
+        self.freqChange = False
+        self.interval = interval
         
-    def setFreq(self):
-        pass 
+    def setFreq(self, newFreq):
+        self.freq = newFreq
+        self.newTimeToSleep = 1/(self.freq/60)
+
+        
+
+    def run(self):
+        while True:
+            if not self.stop:
+                acc = self.timeToSleep
+                timeSlept = 0
+                self.playSound()
+                while timeSlept < acc:
+                    minimum = min(self.interval,self.timeToSleep)
+                    time.sleep(minimum)
+                    timeSlept += minimum
+
+                    acc = min(self.timeToSleep-minimum,self.newTimeToSleep)
+                    self.timeToSleep = self.newTimeToSleep
+                # acc = self.timeToSleep
+                # print(self.freq)
+                # print(self.timeToSleep)
+                # print()
+                # for i in range(10):
+                #     if self.freqChange:
+                #         self.freqChange = False
+                #         break
+                #     else:
+                #         time.sleep(self.timeToSleep/10)
+
+    def playSound(self):
+        winsound.PlaySound('Ticking-clock-sound.wav', winsound.SND_FILENAME)
+
+    def toggle(self):
+        self.stop = True
+
 
 def get_elapsed(start):
     return time.time() - start
