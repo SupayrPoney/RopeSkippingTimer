@@ -25,7 +25,7 @@ class MainWidget(QWidget):
         self.buttonLayout = QHBoxLayout()
         self.barsLayout = QHBoxLayout()
         self.inputLayout = QHBoxLayout()
-        self.frequencyLayout = QHBoxLayout()
+##        self.frequencyLayout = QHBoxLayout()
 
         self.input1Layout = QVBoxLayout()
         self.input2Layout = QVBoxLayout()
@@ -68,11 +68,11 @@ class MainWidget(QWidget):
         self.inputLayout.addLayout(self.input2Layout)
         self.inputLayout.addLayout(self.input3Layout)
 
-        self.frequency = QLabel("0")
-        f = QFont("Arial", 40)
-        self.frequency.setFont( f)
-        self.frequencyLayout.addWidget(self.frequency)
-        self.frequencyLayout.setAlignment(Qt.AlignHCenter)
+##        self.frequency = QLabel("0")
+##        f = QFont("Arial", 40)
+##        self.frequency.setFont( f)
+##        self.frequencyLayout.addWidget(self.frequency)
+##        self.frequencyLayout.setAlignment(Qt.AlignHCenter)
         
         self.progressBar = QProgressBar()
         self.progressBar.setTextVisible(False)
@@ -81,7 +81,7 @@ class MainWidget(QWidget):
     
         self.mainLayout.addLayout(self.inputLayout)
         self.mainLayout.addLayout(self.buttonLayout)
-        self.mainLayout.addLayout(self.frequencyLayout)
+##        self.mainLayout.addLayout(self.frequencyLayout)
         self.mainLayout.addLayout(self.barsLayout)
         self.setLayout(self.mainLayout)
 
@@ -111,8 +111,8 @@ class MainWidget(QWidget):
             QMessageBox.warning(self, "Input missing", "No frequency.", QMessageBox.Ok)
 
     def update(self, currentFreq, updateFreq, percentage):
-        if updateFreq:
-            self.frequency.setText(str(round(currentFreq)))
+##        if updateFreq:
+##            self.frequency.setText(str(round(currentFreq)))
         self.progressBar.setValue(100*percentage)
         self.freqChangeSignal.emit(currentFreq)
 
@@ -123,7 +123,7 @@ class MainWidget(QWidget):
 
     def reset(self):
         self.stop()
-        self.frequency.setText("0")
+##        self.frequency.setText("0")
         self.progressBar.setValue(0)
         
         
@@ -151,7 +151,7 @@ class TimerThread(QThread):
             if not self._isStopped:
                 currentFreq += self.deltaFreq/self.interval
                 updateFreq = counter%self.interval == 0
-                self.tick.emit(min(currentFreq,self.maxFreq), updateFreq, counter/EXERCISETIME)
+                self.tick.emit(min(currentFreq,self.maxFreq), updateFreq, 2*counter/EXERCISETIME)
             time.sleep(1)
 
         while counter <= EXERCISETIME:
@@ -159,7 +159,7 @@ class TimerThread(QThread):
             if not self._isStopped:
                 currentFreq -= self.deltaFreq/self.interval
                 updateFreq = counter%self.interval == 0
-                self.tick.emit(min(currentFreq,self.maxFreq), updateFreq, counter/EXERCISETIME)
+                self.tick.emit(min(currentFreq,self.maxFreq), updateFreq, 2 - 2*counter/EXERCISETIME)
 
             
             time.sleep(1)
